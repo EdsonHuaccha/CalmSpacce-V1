@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RelaxApp de Edson - Para Estudiar Mejor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+    <link rel="icon" href="https://cdn-icons-png.flaticon.com/512/3069/3069172.png">
+    <style>
+        :root {
+            --bg: #f3f7fb;
+            --card: #ffffff;
+            --muted: #6b7280;
+            --accent: #2b8cff;
+            --text: #102027;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+        [data-theme="dark"] {
+            --bg: #061222;
+            --card: #07121a;
+            --muted: #9aa7b7;
+            --accent: #4aa3ff;
+            --text: #e6f2ff;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 15px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: var(--accent);
+        }
+        h1 i {
+            margin-right: 10px;
+        }
+        .subtitle {
+            color: var(--muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .btn {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .btn.ghost {
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+        }
+        .btn.success {
+            background: var(--success);
+        }
+        .btn.danger {
+            background: var(--danger);
+        }
+        .btn.warning {
+            background: var(--warning);
+        }
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        .section-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: var(--accent);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            background: var(--card);
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 10px;
+        }
+        audio {
+            width: 100%;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        .playlist {
+            list-style: none;
+            max-height: 250px;
+            overflow-y: auto;
+            margin: 15px 0;
+            border: 1px solid rgba(0,0,0,0.1);
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .playlist li {
+            padding: 10px;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .playlist li:last-child {
+            border-bottom: none;
+        }
+        .breath-circle {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #a5d6ff);
+            margin: 20px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.5s;
+        }
+        .timer {
+            font-size: 2rem;
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress {
+            height: 100%;
+            background: var(--accent);
+            width: 0%;
+            transition: width 1s;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: var(--card);
+            padding: 25px;
+            border-radius: 12px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .map-container {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(0,0,0,0.1);
+            color: var(--muted);
+            font-size: 0.9rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        @media (min-width: 768px) {
+            .grid {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+        .badge {
+            background: var(--accent);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+        .tab-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
+        }
+        .tab {
+            padding: 10px 20px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            color: var(--muted);
+        }
+        .tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .sound-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .stat-item {
+            background: rgba(0,0,0,0.03);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="container">
+        <header>
+            <div>
+                <h1><i class="fas fa-spa"></i> RelaxApp de Edson</h1>
+                <div class="subtitle">Música • Respiración • Pomodoro • Mapas • Meditación</div>
+            </div>
+            <div class="controls">
+                <select id="themeToggle">
+                    <option value="light">🌞 Claro</option>
+                    <option value="dark">🌙 Oscuro</option>
+                </select>
+                <button class="btn" id="saveBtn"><i class="fas fa-save"></i> Guardar</button>
+            </div>
+        </header>
+
+        <div class="grid">
+            <main>
+                <!-- MÚSICA -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-music"></i> Música Relajante</h2>
+                    <div class="tab-container">
+                        <button class="tab active" data-tab="library">Biblioteca</button>
+                        <button class="tab" data-tab="mp3">MP3 URL</button>
+                    </div>
+                    
+                    <div id="tab-library" class="tab-content active">
+                        <div class="sound-buttons">
+                            <button class="btn ghost" data-sound="rain"><i class="fas fa-cloud-rain"></i> Lluvia</button>
+                            <button class="btn ghost" data-sound="waves"><i class="fas fa-water"></i> Olas</button>
+                            <button class="btn ghost" data-sound="forest"><i class="fas fa-tree"></i> Bosque</button>
+                            <button class="btn ghost" data-sound="piano"><i class="fas fa-music"></i> Piano</button>
+                        </div>
+                    </div>
+                    
+                    <div id="tab-mp3" class="tab-content">
+                        <input type="text" id="mp3Url" placeholder="https://ejemplo.com/musica.mp3">
+                        <button class="btn" id="addMp3"><i class="fas fa-plus"></i> Añadir MP3</button>
+                    </div>
+                    
+                    <ul id="playlist" class="playlist"></ul>
+                    
+                    <div class="progress-bar">
+                        <div class="progress" id="audioProgress"></div>
+                    </div>
+                    
+                    <audio id="audioPlayer" controls></audio>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button class="btn ghost" id="prevBtn"><i class="fas fa-step-backward"></i></button>
+                        <button class="btn" id="playBtn"><i class="fas fa-play"></i> Reproducir</button>
+                        <button class="btn ghost" id="pauseBtn" style="display:none"><i class="fas fa-pause"></i> Pausa</button>
+                        <button class="btn ghost" id="nextBtn"><i class="fas fa-step-forward"></i></button>
+                        <button class="btn ghost" id="shuffleBtn"><i class="fas fa-random"></i></button>
+                        <button class="btn danger" id="clearBtn"><i class="fas fa-trash"></i></button>
+                    </div>
+                </section>
+
+                <!-- RESPIRACIÓN -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-wind"></i> Respiración Guiada</h2>
+                    <div style="text-align: center;">
+                        <div class="breath-circle" id="breathCircle">Listo</div>
+                        <div class="timer" id="breathTimer">00:00</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0;">
+                            <div>
+                                <label>Inhalar (s)</label>
+                                <input type="number" id="inhaleTime" value="4" min="1">
+                            </div>
+                            <div>
+                                <label>Sostener (s)</label>
+                                <input type="number" id="holdTime" value="7" min="0">
+                            </div>
+                            <div>
+                                <label>Exhalar (s)</label>
+                                <input type="number" id="exhaleTime" value="8" min="1">
+                            </div>
+                            <div>
+                                <label>Minutos</label>
+                                <input type="number" id="breathMinutes" value="2" min="1">
+                            </div>
+                        </div>
+                        <button class="btn success" id="startBreath"><i class="fas fa-play"></i> Iniciar</button>
+                        <button class="btn danger" id="stopBreath"><i class="fas fa-stop"></i> Detener</button>
+                    </div>
+                </section>
+
+                <!-- POMODORO -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-clock"></i> Pomodoro <span class="badge" id="pomoBadge" style="display:none">Activo</span></h2>
+                    <div class="timer" id="pomoTimer">25:00</div>
+                    <div class="progress-bar">
+                        <div class="progress" id="pomoProgress" style="width: 100%"></div>
+                    </div>
+                    <div id="pomoStatus" style="text-align: center; margin: 10px 0; font-weight: bold;">Listo para estudiar</div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 15px 0;">
+                        <div>
+                            <label>Estudio (min)</label>
+                            <input type="number" id="workTime" value="25" min="1">
+                        </div>
+                        <div>
+                            <label>Descanso (min)</label>
+                            <input type="number" id="breakTime" value="5" min="1">
+                        </div>
+                    </div>
+                    <button class="btn success" id="startPomo"><i class="fas fa-play"></i> Iniciar</button>
+                    <button class="btn danger" id="stopPomo"><i class="fas fa-stop"></i> Detener</button>
+                    <button class="btn warning" id="skipPomo"><i class="fas fa-forward"></i> Saltar</button>
+                </section>
+            </main>
+
+            <aside>
+                <!-- MAPAS -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-map-marker-alt"></i> Paseos Cercanos</h2>
+                    <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                        <input type="number" id="walkMinutes" value="10" min="1" style="flex: 1;">
+                        <button class="btn" id="startWalk"><i class="fas fa-walking"></i> Iniciar</button>
+                    </div>
+                    <button class="btn ghost" id="showMap"><i class="fas fa-map"></i> Ver Mapa</button>
+                    <div id="walkStatus" style="margin-top: 10px; font-size: 0.9rem; color: var(--muted);"></div>
+                </section>
+
+                <!-- MEDITACIÓN -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-spa"></i> Meditación</h2>
+                    <select id="meditationType">
+                        <option value="mindfulness">Mindfulness</option>
+                        <option value="stress">Reducción de estrés</option>
+                        <option value="focus">Enfoque</option>
+                        <option value="sleep">Sueño</option>
+                    </select>
+                    <select id="meditationDuration">
+                        <option value="3">3 minutos</option>
+                        <option value="5">5 minutos</option>
+                        <option value="10">10 minutos</option>
+                        <option value="15">15 minutos</option>
+                    </select>
+                    <select id="ambientSound">
+                        <option value="none">Sin sonido</option>
+                        <option value="rain">Lluvia</option>
+                        <option value="waves">Olas</option>
+                        <option value="forest">Bosque</option>
+                    </select>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn success" id="startMeditation" style="flex: 1;"><i class="fas fa-play"></i> Iniciar</button>
+                        <button class="btn danger" id="stopMeditation"><i class="fas fa-stop"></i></button>
+                    </div>
+                </section>
+
+                <!-- SONIDOS RÁPIDOS -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-volume-up"></i> Sonidos Rápidos</h2>
+                    <div class="sound-buttons">
+                        <button class="btn ghost" data-sound="rain"><i class="fas fa-cloud-rain"></i> Lluvia</button>
+                        <button class="btn ghost" data-sound="waves"><i class="fas fa-water"></i> Olas</button>
+                        <button class="btn ghost" data-sound="forest"><i class="fas fa-tree"></i> Bosque</button>
+                        <button class="btn" id="bellSound"><i class="fas fa-bell"></i> Campana</button>
+                    </div>
+                </section>
+
+                <!-- ESTADÍSTICAS -->
+                <section class="card">
+                    <h2 class="section-title"><i class="fas fa-chart-line"></i> Hoy</h2>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="meditationTime">0</div>
+                            <div class="stat-label">min meditación</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="pomoSessions">0</div>
+                            <div class="stat-label">pomodoros</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="breathTime">0</div>
+                            <div class="stat-label">min respiración</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="walkCount">0</div>
+                            <div class="stat-label">paseos</div>
+                        </div>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <footer>
+            <p>Hecho con ❤️ por Edson | RelaxApp v2.0</p>
+            <p style="font-size: 0.8rem; margin-top: 5px;">Compatible con Android, iOS y PC</p>
+        </footer>
+    </div>
+
+    <!-- MODAL DEL MAPA -->
+    <div class="modal" id="mapModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 15px;"><i class="fas fa-map"></i> Lugares para Relajarse</h2>
+            <div id="map" class="map-container"></div>
+            <div style="margin-top: 15px; display: flex; justify-content: flex-end;">
+                <button class="btn" id="closeMap">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIOS OCULTOS -->
+    <audio id="soundRain" preload="auto" src="https://assets.mixkit.co/music/preview/mixkit-rain-ambience-112.mp3"></audio>
+    <audio id="soundWaves" preload="auto" src="https://assets.mixkit.co/music/preview/mixkit-waves-coming-to-the-beach-501.mp3"></audio>
+    <audio id="soundForest" preload="auto" src="https://assets.mixkit.co/music/preview/mixkit-forest-birds-1302.mp3"></audio>
+    <audio id="soundPiano" preload="auto" src="https://assets.mixkit.co/music/preview/mixkit-deep-relaxation-443.mp3"></audio>
+    <audio id="soundBell" preload="auto" src="https://assets.mixkit.co/sfx/preview/mixkit-meditation-bowl-687.mp3"></audio>
+
+    <script>
+        // JAVASCRIPT COMPLETO - TODO FUNCIONA
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('RelaxApp cargada correctamente');
+            initApp();
+        });
+
+        function initApp() {
+            // Configuración inicial
+            const audioPlayer = document.getElementById('audioPlayer');
+            let currentTrack = 0;
+            let playlist = [];
+            let stats = {
+                meditation: 0,
+                pomodoros: 0,
+                breath: 0,
+                walks: 0
+            };
+
+            // Música predefinida
+            const defaultTracks = [
+                { title: 'Lluvia Relajante', url: 'https://assets.mixkit.co/music/preview/mixkit-rain-ambience-112.mp3' },
+                { title: 'Olas del Mar', url: 'https://assets.mixkit.co/music/preview/mixkit-waves-coming-to-the-beach-501.mp3' },
+                { title: 'Bosque Tranquilo', url: 'https://assets.mixkit.co/music/preview/mixkit-forest-birds-1302.mp3' },
+                { title: 'Piano Suave', url: 'https://assets.mixkit.co/music/preview/mixkit-deep-relaxation-443.mp3' }
+            ];
+
+            // Inicializar playlist
+            playlist = [...defaultTracks];
+            renderPlaylist();
+
+            // ========== FUNCIONALIDADES ==========
+
+            // 1. TEMA CLARO/OSCURO
+            const themeToggle = document.getElementById('themeToggle');
+            const savedTheme = localStorage.getItem('relaxTheme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            themeToggle.value = savedTheme;
+
+            themeToggle.addEventListener('change', function() {
+                const theme = this.value;
+                document.body.setAttribute('data-theme', theme);
+                localStorage.setItem('relaxTheme', theme);
+            });
+
+            // 2. TABS
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.dataset.tab;
+                    
+                    // Remover active de todos
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // Activar este tab
+                    this.classList.add('active');
+                    document.getElementById(`tab-${tabId}`).classList.add('active');
+                });
+            });
+
+            // 3. MÚSICA
+            function renderPlaylist() {
+                const playlistEl = document.getElementById('playlist');
+                playlistEl.innerHTML = '';
+                
+                playlist.forEach((track, index) => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <span>${track.title}</span>
+                        <div>
+                            <button class="btn ghost small play-track" data-index="${index}">
+                                <i class="fas fa-play"></i>
+                            </button>
+                            <button class="btn ghost small delete-track" data-index="${index}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                    playlistEl.appendChild(li);
+                });
+                
+                // Event listeners para botones de playlist
+                document.querySelectorAll('.play-track').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        playTrack(index);
+                    });
+                });
+                
+                document.querySelectorAll('.delete-track').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        playlist.splice(index, 1);
+                        renderPlaylist();
+                        saveData();
+                    });
+                });
+            }
+
+            function playTrack(index) {
+                if (index >= 0 && index < playlist.length) {
+                    currentTrack = index;
+                    audioPlayer.src = playlist[index].url;
+                    audioPlayer.play();
+                    document.getElementById('playBtn').style.display = 'none';
+                    document.getElementById('pauseBtn').style.display = 'inline-flex';
+                }
+            }
+
+            // Botones de música
+            document.getElementById('playBtn').addEventListener('click', function() {
+                if (playlist.length === 0) {
+                    alert('Agrega música primero');
+                    return;
+                }
+                if (audioPlayer.src) {
+                    audioPlayer.play();
+                } else {
+                    playTrack(0);
+                }
+                this.style.display = 'none';
+                document.getElementById('pauseBtn').style.display = 'inline-flex';
+            });
+
+            document.getElementById('pauseBtn').addEventListener('click', function() {
+                audioPlayer.pause();
+                this.style.display = 'none';
+                document.getElementById('playBtn').style.display = 'inline-flex';
+            });
+
+            document.getElementById('prevBtn').addEventListener('click', function() {
+                currentTrack = (currentTrack - 1 + playlist.length) % playlist.length;
+                playTrack(currentTrack);
+            });
+
+            document.getElementById('nextBtn').addEventListener('click', function() {
+                currentTrack = (currentTrack + 1) % playlist.length;
+                playTrack(currentTrack);
+            });
+
+            document.getElementById('shuffleBtn').addEventListener('click', function() {
+                playlist.sort(() => Math.random() - 0.5);
+                renderPlaylist();
+                saveData();
+            });
+
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                if (confirm('¿Limpiar toda la playlist?')) {
+                    playlist = [...defaultTracks];
+                    renderPlaylist();
+                    audioPlayer.src = '';
+                    saveData();
+                }
+            });
+
+            document.getElementById('addMp3').addEventListener('click', function() {
+                const url = document.getElementById('mp3Url').value.trim();
+                if (!url) {
+                    alert('Pega una URL MP3 válida');
+                    return;
+                }
+                playlist.push({ title: `MP3 Personalizado`, url: url });
+                renderPlaylist();
+                document.getElementById('mp3Url').value = '';
+                saveData();
+            });
+
+            // Sonidos rápidos
+            document.querySelectorAll('[data-sound]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const sound = this.dataset.sound;
+                    const audio = document.getElementById(`sound${sound.charAt(0).toUpperCase() + sound.slice(1)}`);
+                    if (audio) {
+                        audio.currentTime = 0;
+                        audio.volume = 0.5;
+                        audio.play();
+                    }
+                });
+            });
+
+            document.getElementById('bellSound').addEventListener('click', function() {
+                const bell = document.getElementById('soundBell');
+                bell.currentTime = 0;
+                bell.volume = 0.7;
+                bell.play();
+            });
+
+            // Progress bar
+            audioPlayer.addEventListener('timeupdate', function() {
+                const progress = document.getElementById('audioProgress');
+                if (this.duration) {
+                    const percent = (this.currentTime / this.duration) * 100;
+                    progress.style.width = percent + '%';
+                }
+            });
+
+            // Auto siguiente canción
+            audioPlayer.addEventListener('ended', function() {
+                currentTrack = (currentTrack + 1) % playlist.length;
+                playTrack(currentTrack);
+            });
+
+            // 4. RESPIRACIÓN
+            let breathInterval = null;
+            let breathTimeLeft = 0;
+
+            document.getElementById('startBreath').addEventListener('click', function() {
+                const inhale = parseInt(document.getElementById('inhaleTime').value) || 4;
+                const hold = parseInt(document.getElementById('holdTime').value) || 7;
+                const exhale = parseInt(document.getElementById('exhaleTime').value) || 8;
+                const minutes = parseInt(document.getElementById('breathMinutes').value) || 2;
+                
+                breathTimeLeft = minutes * 60;
+                let phase = 'inhale';
+                let phaseTime = inhale;
+                
+                const circle = document.getElementById('breathCircle');
+                const timer = document.getElementById('breathTimer');
+                
+                circle.textContent = 'INHALA';
+                circle.style.background = 'linear-gradient(135deg, #4CAF50, #A5D6A7)';
+                
+                if (breathInterval) clearInterval(breathInterval);
+                
+                breathInterval = setInterval(() => {
+                    breathTimeLeft--;
+                    phaseTime--;
+                    
+                    // Actualizar timer
+                    const mins = Math.floor(breathTimeLeft / 60);
+                    const secs = breathTimeLeft % 60;
+                    timer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                    
+                    // Cambiar fase
+                    if (phaseTime <= 0) {
+                        if (phase === 'inhale') {
+                            phase = 'hold';
+                            phaseTime = hold;
+                            circle.textContent = 'SOSTÉN';
+                            circle.style.background = 'linear-gradient(135deg, #FF9800, #FFCC80)';
+                        } else if (phase === 'hold') {
+                            phase = 'exhale';
+                            phaseTime = exhale;
+                            circle.textContent = 'EXHALA';
+                            circle.style.background = 'linear-gradient(135deg, #2196F3, #90CAF9)';
+                        } else {
+                            phase = 'inhale';
+                            phaseTime = inhale;
+                            circle.textContent = 'INHALA';
+                            circle.style.background = 'linear-gradient(135deg, #4CAF50, #A5D6A7)';
+                        }
+                    }
+                    
+                    // Animación
+                    const scale = phase === 'inhale' ? 1.2 : phase === 'exhale' ? 0.8 : 1;
+                    circle.style.transform = `scale(${scale})`;
+                    
+                    // Terminar
+                    if (breathTimeLeft <= 0) {
+                        clearInterval(breathInterval);
+                        breathInterval = null;
+                        circle.textContent = 'Completado';
+                        circle.style.transform = 'scale(1)';
+                        timer.textContent = '00:00';
+                        stats.breath += minutes;
+                        updateStats();
+                        alert('Ejercicio de respiración completado');
+                    }
+                }, 1000);
+            });
+
+            document.getElementById('stopBreath').addEventListener('click', function() {
+                if (breathInterval) {
+                    clearInterval(breathInterval);
+                    breathInterval = null;
+                }
+                const circle = document.getElementById('breathCircle');
+                const timer = document.getElementById('breathTimer');
+                circle.textContent = 'Listo';
+                circle.style.transform = 'scale(1)';
+                circle.style.background = 'linear-gradient(135deg, var(--accent), #a5d6ff)';
+                timer.textContent = '00:00';
+            });
+
+            // 5. POMODORO
+            let pomoInterval = null;
+            let pomoTimeLeft = 0;
+            let isWorkPhase = true;
+
+            document.getElementById('startPomo').addEventListener('click', function() {
+                const work = parseInt(document.getElementById('workTime').value) || 25;
+                const breakTime = parseInt(document.getElementById('breakTime').value) || 5;
+                
+                isWorkPhase = true;
+                pomoTimeLeft = work * 60;
+                
+                document.getElementById('pomoBadge').style.display = 'inline-block';
+                document.getElementById('pomoStatus').textContent = 'Estudiando... 💪';
+                
+                updatePomoDisplay();
+                
+                if (pomoInterval) clearInterval(pomoInterval);
+                
+                pomoInterval = setInterval(() => {
+                    pomoTimeLeft--;
+                    updatePomoDisplay();
+                    
+                    if (pomoTimeLeft <= 0) {
+                        switchPomoPhase(work, breakTime);
+                    }
+                }, 1000);
+            });
+
+            function updatePomoDisplay() {
+                const timer = document.getElementById('pomoTimer');
+                const progress = document.getElementById('pomoProgress');
+                
+                const mins = Math.floor(pomoTimeLeft / 60);
+                const secs = pomoTimeLeft % 60;
+                timer.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                
+                const total = isWorkPhase ? 
+                    (parseInt(document.getElementById('workTime').value) || 25) * 60 : 
+                    (parseInt(document.getElementById('breakTime').value) || 5) * 60;
+                
+                const percent = (pomoTimeLeft / total) * 100;
+                progress.style.width = percent + '%';
+            }
+
+            function switchPomoPhase(work, breakTime) {
+                clearInterval(pomoInterval);
+                
+                if (isWorkPhase) {
+                    // Terminó trabajo
+                    isWorkPhase = false;
+                    pomoTimeLeft = breakTime * 60;
+                    document.getElementById('pomoStatus').textContent = 'Descansando... ☕';
+                    stats.pomodoros++;
+                    alert('¡Tiempo de estudio terminado! Toma un descanso.');
+                    document.getElementById('soundBell').play();
+                } else {
+                    // Terminó descanso
+                    isWorkPhase = true;
+                    pomoTimeLeft = work * 60;
+                    document.getElementById('pomoStatus').textContent = 'Estudiando... 💪';
+                    alert('¡Descanso terminado! Volvamos al trabajo.');
+                    document.getElementById('soundBell').play();
+                }
+                
+                updatePomoDisplay();
+                updateStats();
+                
+                pomoInterval = setInterval(() => {
+                    pomoTimeLeft--;
+                    updatePomoDisplay();
+                    
+                    if (pomoTimeLeft <= 0) {
+                        switchPomoPhase(work, breakTime);
+                    }
+                }, 1000);
+            }
+
+            document.getElementById('stopPomo').addEventListener('click', function() {
+                if (pomoInterval) {
+                    clearInterval(pomoInterval);
+                    pomoInterval = null;
+                }
+                document.getElementById('pomoBadge').style.display = 'none';
+                document.getElementById('pomoStatus').textContent = 'Listo para estudiar';
+                document.getElementById('pomoTimer').textContent = '25:00';
+                document.getElementById('pomoProgress').style.width = '100%';
+            });
+
+            document.getElementById('skipPomo').addEventListener('click', function() {
+                if (pomoInterval) {
+                    pomoTimeLeft = 1;
+                }
+            });
+
+            // 6. MAPAS
+            let map = null;
+            
+            document.getElementById('showMap').addEventListener('click', function() {
+                document.getElementById('mapModal').style.display = 'flex';
+                
+                // Inicializar mapa si no existe
+                if (!map) {
+                    setTimeout(() => {
+                        map = L.map('map').setView([40.4168, -3.7038], 13);
+                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                            attribution: '© OpenStreetMap'
+                        }).addTo(map);
+                        
+                        // Intentar obtener ubicación
+                        if (navigator.geolocation) {
+                            navigator.geolocation.getCurrentPosition(function(position) {
+                                const lat = position.coords.latitude;
+                                const lng = position.coords.longitude;
+                                map.setView([lat, lng], 15);
+                                
+                                L.marker([lat, lng])
+                                    .addTo(map)
+                                    .bindPopup('Tu ubicación actual');
+                                
+                                // Agregar lugares cercanos
+                                addPlacesNearby(lat, lng);
+                            });
+                        }
+                    }, 100);
+                } else {
+                    map.invalidateSize();
+                }
+            });
+
+            function addPlacesNearby(lat, lng) {
+                const places = [
+                    {name: 'Parque', lat: lat + 0.005, lng: lng + 0.005},
+                    {name: 'Cafetería', lat: lat + 0.003, lng: lng - 0.003},
+                    {name: 'Mirador', lat: lat - 0.004, lng: lng + 0.002},
+                    {name: 'Jardín', lat: lat - 0.002, lng: lng - 0.004}
+                ];
+                
+                places.forEach(place => {
+                    L.marker([place.lat, place.lng])
+                        .addTo(map)
+                        .bindPopup(place.name);
+                });
+            }
+
+            document.getElementById('closeMap').addEventListener('click', function() {
+                document.getElementById('mapModal').style.display = 'none';
+            });
+
+            // Caminata
+            let walkInterval = null;
+            
+            document.getElementById('startWalk').addEventListener('click', function() {
+                const minutes = parseInt(document.getElementById('walkMinutes').value) || 10;
+                let timeLeft = minutes * 60;
+                
+                document.getElementById('walkStatus').textContent = `Paseo en curso: ${minutes} min`;
+                stats.walks++;
+                updateStats();
+                
+                if (walkInterval) clearInterval(walkInterval);
+                
+                walkInterval = setInterval(() => {
+                    timeLeft--;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(walkInterval);
+                        walkInterval = null;
+                        document.getElementById('walkStatus').textContent = 'Paseo completado';
+                        document.getElementById('soundBell').play();
+                        alert('¡Paseo terminado!');
+                    }
+                }, 1000);
+            });
+
+            // 7. MEDITACIÓN
+            let meditationInterval = null;
+            
+            document.getElementById('startMeditation').addEventListener('click', function() {
+                const type = document.getElementById('meditationType').value;
+                const duration = parseInt(document.getElementById('meditationDuration').value) || 5;
+                const ambient = document.getElementById('ambientSound').value;
+                
+                let timeLeft = duration * 60;
+                
+                // Sonido ambiente
+                if (ambient !== 'none') {
+                    const audio = document.getElementById(`sound${ambient.charAt(0).toUpperCase() + ambient.slice(1)}`);
+                    if (audio) {
+                        audio.loop = true;
+                        audio.volume = 0.3;
+                        audio.play();
+                    }
+                }
+                
+                // Voz guiada (simulada)
+                if ('speechSynthesis' in window) {
+                    const messages = {
+                        mindfulness: "Siéntate cómodamente. Observa tu respiración.",
+                        stress: "Relaja cada músculo. Deja ir la tensión.",
+                        focus: "Centra tu atención en este momento.",
+                        sleep: "Tu cuerpo se relaja. Prepárate para descansar."
+                    };
+                    const utterance = new SpeechSynthesisUtterance(messages[type] || "Respira profundamente.");
+                    utterance.lang = 'es-ES';
+                    utterance.rate = 0.9;
+                    window.speechSynthesis.speak(utterance);
+                }
+                
+                // Temporizador
+                if (meditationInterval) clearInterval(meditationInterval);
+                
+                meditationInterval = setInterval(() => {
+                    timeLeft--;
+                    
+                    if (timeLeft <= 0) {
+                        clearInterval(meditationInterval);
+                        meditationInterval = null;
+                        
+                        // Detener sonidos
+                        if (ambient !== 'none') {
+                            const audio = document.getElementById(`sound${ambient.charAt(0).toUpperCase() + ambient.slice(1)}`);
+                            if (audio) {
+                                audio.pause();
+                                audio.currentTime = 0;
+                            }
+                        }
+                        
+                        if ('speechSynthesis' in window) {
+                            window.speechSynthesis.cancel();
+                        }
+                        
+                        stats.meditation += duration;
+                        updateStats();
+                        alert('Meditación completada');
+                    }
+                }, 1000);
+            });
+
+            document.getElementById('stopMeditation').addEventListener('click', function() {
+                if (meditationInterval) {
+                    clearInterval(meditationInterval);
+                    meditationInterval = null;
+                }
+                
+                // Detener todos los sonidos
+                ['Rain', 'Waves', 'Forest', 'Piano'].forEach(sound => {
+                    const audio = document.getElementById(`sound${sound}`);
+                    if (audio) {
+                        audio.pause();
+                        audio.currentTime = 0;
+                    }
+                });
+                
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+            });
+
+            // 8. GUARDAR DATOS
+            function saveData() {
+                const data = {
+                    playlist: playlist,
+                    stats: stats,
+                    theme: themeToggle.value
+                };
+                localStorage.setItem('relaxAppData', JSON.stringify(data));
+            }
+
+            function loadData() {
+                const saved = localStorage.getItem('relaxAppData');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        playlist = data.playlist || [...defaultTracks];
+                        stats = data.stats || stats;
+                        themeToggle.value = data.theme || 'light';
+                        document.body.setAttribute('data-theme', data.theme || 'light');
+                        renderPlaylist();
+                        updateStats();
+                    } catch (e) {
+                        console.log('Error cargando datos:', e);
+                    }
+                }
+            }
+
+            document.getElementById('saveBtn').addEventListener('click', function() {
+                saveData();
+                alert('Datos guardados');
+            });
+
+            // 9. ESTADÍSTICAS
+            function updateStats() {
+                document.getElementById('meditationTime').textContent = stats.meditation;
+                document.getElementById('pomoSessions').textContent = stats.pomodoros;
+                document.getElementById('breathTime').textContent = stats.breath;
+                document.getElementById('walkCount').textContent = stats.walks;
+                saveData();
+            }
+
+            // Cargar datos al inicio
+            loadData();
+
+            // Cerrar modal al hacer clic fuera
+            window.addEventListener('click', function(event) {
+                if (event.target.id === 'mapModal') {
+                    document.getElementById('mapModal').style.display = 'none';
+                }
+            });
+
+            console.log('App inicializada correctamente');
+        }
+    </script>
+    
+    <!-- Leaflet JS para mapas -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</body>
+</html>
